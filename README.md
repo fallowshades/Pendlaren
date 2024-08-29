@@ -48,4 +48,131 @@ export default tseslint.config({
   },
 })
 ```
+
 # Pendlaren
+
+##
+
+- information not accessible at start
+
+```tsx
+//   useEffect(() => {
+//     const fetchData = async () => {
+//       setLoading(true)
+//       try {
+//         const response =
+//           await fetch(`https://api.resrobot.se/v2.1/location.nearbystops?originCoordLat=57.708895&originCoordLong=11.973479&format=json&accessId=${API_KEY}
+// `)
+//         if (!response.ok) {
+//           throw new Error('Network response was not ok')
+//         }
+//         const result = await response.json()
+//         setData(result)
+//         console.log(data)
+//       } catch (error) {
+//         console.error('Failed to fetch data:', error)
+//       } finally {
+//         setLoading(false)
+//       }
+//     }
+
+//     fetchData()
+//   }, [])
+```
+
+```tsx
+function App() {
+  const [data, setData] = useState<null | any[]>()
+    const [error, setError] = useState<string | null>(null)
+```
+
+- browser api
+
+```tsx
+const [location, setLocation] = useState<{
+  lat: number | null
+  long: number | null
+}>({ lat: null, long: null }) //care input value
+const [stops, setStops] = useState<any[]>([])
+const [selectedStop, setSelectedStop] = useState<string | null>(null)
+
+useEffect(() => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocation({
+          lat: position.coords.latitude,
+          long: position.coords.longitude,
+        })
+      },
+      (error) => {
+        console.error('Error fetching location:', error)
+        setError('Unable to retrieve location.')
+      }
+    )
+  } else {
+    setError('Geolocation is not supported by your browser.')
+  }
+}, [])
+```
+
+```tsx
+  const handleFormSubmit = async (event: React.FormEvent) => {
+    event.preventDefault() // Prevent the form from refreshing the page
+    console.log(location.lat && location.long)
+    if (location.lat && location.long) {
+      const url = `https://api.resrobot.se/v2.1/location.nearbystops?search=${search}&originCoordLat=${location.lat}&originCoordLong=${location.long}&format=json&accessId=${API_KEY}`
+
+      console.log('Constructed URL: ', url)
+
+      // Optionally, make the API request here
+      setLoading(true)
+      try {
+
+           const response = await fetch(url, {
+          method: 'GET', // or 'POST' if you are sending data
+          headers: {
+            'Content-Type': 'application/json', // Adjust if needed
+          },
+        })
+        ...
+      }...
+    }
+  }
+
+```
+
+```tsx
+if (!data)
+  return (
+    <>
+      <form onSubmit={handleFormSubmit}>
+        <label htmlFor='search'>Search Stops</label>
+        <input
+          type='search'
+          name='search'
+          value={search} // controlled component approach
+          onChange={(e) => setSearch(e.target.value)} // handle changes
+        />
+
+        <input
+          type='text'
+          name='originCoordLat'
+          value={location.lat !== null ? location.lat : ''}
+          hidden
+          readOnly
+        />
+        <input
+          hidden
+          type='text'
+          name='originCoordLong'
+          value={location.long !== null ? location.long : ''}
+          readOnly
+        />
+        <button type='submit'>Find Stops</button>
+      </form>
+    </>
+  )
+
+return <p>{JSON.stringify(data)}</p>
+```
